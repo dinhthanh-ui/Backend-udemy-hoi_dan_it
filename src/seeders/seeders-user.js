@@ -2,16 +2,34 @@
 
 module.exports = {
     async up(queryInterface, Sequelize) {
-        return queryInterface.bulkInsert('User', [{
-            email: 'example@example.com',
-            password: '123456',
-            userName: 'dinh thanh',
-            createdAt: new Date(),
-            updatedAt: new Date()
-        }]);
+        return queryInterface.bulkInsert('Group_Role', [{
+                GroupId: '1',
+                RoleId: '2',
+                createdAt: new Date(),
+                updatedAt: new Date()
+            },
+            {
+                GroupId: '2',
+                RoleId: '3',
+                createdAt: new Date(),
+                updatedAt: new Date()
+            },
+            {
+                GroupId: '1',
+                RoleId: '2',
+                createdAt: new Date(),
+                updatedAt: new Date()
+            },
+            {
+                GroupId: '2',
+                RoleId: '1',
+                createdAt: new Date(),
+                updatedAt: new Date()
+            }
+        ]);
     },
 
     async down(queryInterface, Sequelize) {
-        return queryInterface.bulkDelete('Users', null, {})
+        return queryInterface.bulkDelete('Group_Role', null, {})
     }
 };

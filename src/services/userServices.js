@@ -55,7 +55,11 @@ const createUser = (data) => {
                 await db.User.create({
                     email: data.email,
                     password: hasPasswordByBcrypt,
-                    userName: data.userName
+                    userName: data.userName,
+                    address: data.address,
+                    phone: data.phone,
+                    sex: data.sex,
+                    GroupId: data.GroupId,
                 });
             };
             resolve({
@@ -74,6 +78,29 @@ const createUser = (data) => {
 const getAllUser = (user_id) => {
     return new Promise(async(resolve, reject) => {
         try {
+            //===================================//
+            /**
+             * param[*} test relationships
+             */
+
+            // let newUser = await db.User.findOne({
+            //     where: { id: 1 },
+            //     raw: true,
+            //     include: { model: db.Group, attributes: ["name", "description"] },
+            //     nest: true,
+            //     attributes: ["email", "userName", "address", "phone", "sex"]
+            // });
+            // let newRow = await db.Role.findAll({
+            //     include: {
+            //         model: db.Group,
+            //         where: { id: 2 },
+            //         attributes: ["name", "description"]
+            //     },
+            //     raw: true,
+            //     nest: true,
+            //     attributes: ["url", "description"]
+            // });
+            //===========================================//
             let users = "";
             if (user_id === "all") {
                 users = await db.User.findAll({
