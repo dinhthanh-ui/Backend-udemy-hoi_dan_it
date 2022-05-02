@@ -1,76 +1,99 @@
-import userService from '../services/userServices'
 
+import loginService from '../services/loginServices'
 /**
  * @param {*} Create New User
  * @param {*} Method Post
  */
-const createNewUser = async(req, res) => {
-    try {
-        let message = await userService.createUser(req.body)
-        return res.status(200).json(message);
-    } catch (error) {
-        console.error(error)
-    }
-};
-/**
- * @param {*} Show User 
- * @param {*} Method GET 
- */
-const showUser = async(req, res) => {
-    try {
-        let id = req.query.id;
-        if (!id) {
+const Register = async (req, res) =>
+{
+    try
+    {
+        if (!req.body.userName || !req.body.email || !req.body.phone)
+        {
             return res.status(200).json({
                 errorCode: 1,
                 errorMessage: "Missing required parameter !!!",
-                users: []
-            });
-        } else {
-            let users = await userService.getAllUser(id);
+                errorData: ""
+            })
+        } else if (req.body.password && req.body.password.length < 8)
+        {
             return res.status(200).json({
-                errorCode: 0,
-                errorMessage: "Successfully !!!",
-                users
+                errorCode: 1,
+                errorMessage: "Mật khẩu cần dài ít nhất 8 ký tự",
+                errorData: ""
             })
         }
-    } catch (error) {
-        console.log("Error: ", error);
+        else
+        {
+            let message = await loginService.handleRegister(req.body)
+            return res.status(200).json({
+                errorCode: message.errorCode,
+                errorMessage: message.errorMessage,
+                errorData: message.errorData
+            });
+        }
+    } catch (error)
+    {
+        console.log(error);
+        return res.status(500).json({
+            errorCode: -1,
+            errorMessage: "error from server !!!!",
+            errorData: ""
+        })
     }
 };
 /**
- * @param {*} Delete An User
- * @param {*} Method Delete
+ * @param {*} Hand User Login
  */
-const deleteAnUser = async(req, res) => {
-    if (!req.params.id) {
+const Login = async (req, res) =>
+{
+    try
+    {
+        let message = await loginService.handleLogin(req.body);
+        if (message && message.errorData && message.errorData.accessToken)
+        {
+            // set cookie
+            res.cookie("jwt", message.errorData.accessToken, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+        }
         return res.status(200).json({
-            errorCode: 2,
-            errorMessage: "Missing required parameters !!!"
-        });
-    } else {
-        let message = await userService.deleteUser(req.params.id);
-        return res.status(200).json(message);
-    };
-};
-/**
- * @param {*} Update An User
- * @param {*} Method PUT
- */
-const updateAnUser = async(req, res) => {
-    let data = req.body;
-    if (!req.body.id) {
-        return res.status(200).json({
-            errorCode: 2,
-            errorMessage: "Missing required parameters !!!"
-        });
-    } else {
-        let message = await userService.editUser(data);
-        return res.status(200).json(message)
+            errorCode: message.errorCode,
+            errorMessage: message.errorMessage,
+            errorData: message.errorData
+        })
+    } catch (error)
+    {
+        console.log(error);
+        return res.status(500).json({
+            errorCode: -1,
+            errorMessage: "error from server !!!!",
+            errorData: ""
+        })
     }
 }
+const Logout = (req, res) =>
+{
+    try
+    {
+        res.clearCookie("jwt");
+        return res.status(200).json({
+            errorCode: 0,
+            errorMessage: "Đăng Xuất Thành Công !!!",
+            errorData: ""
+        })
+    } catch (error)
+    {
+
+        console.log(error);
+        return res.status(500).json({
+            errorCode: -1,
+            errorMessage: "error from server !!!!",
+            errorData: ""
+        })
+    }
+}
+
 module.exports = {
-    createNewUser: createNewUser,
-    deleteAnUser: deleteAnUser,
-    showUser: showUser,
-    updateAnUser: updateAnUser
+    Register: Register,
+    Login: Login,
+    Logout: Logout
 }
