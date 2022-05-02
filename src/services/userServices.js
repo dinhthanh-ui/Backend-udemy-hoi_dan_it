@@ -1,16 +1,19 @@
 import db from '../models/index';
 import bcrypt from 'bcryptjs';
 const salt = bcrypt.genSaltSync(10);
-
 /**
  * @param Has password of the User
  */
-const hasUserPassword = (password) => {
-    return new Promise(async(resolve, reject) => {
-        try {
+const hasUserPassword = (password) =>
+{
+    return new Promise(async (resolve, reject) =>
+    {
+        try
+        {
             let hasPassword = await bcrypt.hashSync(password, salt);
             resolve(hasPassword);
-        } catch (error) {
+        } catch (error)
+        {
             reject(error);
         }
     })
@@ -18,19 +21,71 @@ const hasUserPassword = (password) => {
 /**
  * @param Check User on the database side
  */
-const checkUser = (user_name, user_email) => {
-    return new Promise(async(resolve, reject) => {
-        try {
+const checkEmail = (user_email) =>
+{
+    return new Promise(async (resolve, reject) =>
+    {
+        try
+        {
 
             let user = await db.User.findOne({
-                where: { userName: user_name, email: user_email }
+                where: { email: user_email }
             });
-            if (user) {
+            if (user)
+            {
                 resolve(true)
-            } else {
+            } else
+            {
                 resolve(false)
             }
-        } catch (error) {
+        } catch (error)
+        {
+            reject(error);
+        }
+    });
+};
+const checkUser = (user_name) =>
+{
+    return new Promise(async (resolve, reject) =>
+    {
+        try
+        {
+
+            let user = await db.User.findOne({
+                where: { userName: user_name }
+            });
+            if (user)
+            {
+                resolve(true)
+            } else
+            {
+                resolve(false)
+            }
+        } catch (error)
+        {
+            reject(error);
+        }
+    });
+};
+const checkPhone = (user_phone) =>
+{
+    return new Promise(async (resolve, reject) =>
+    {
+        try
+        {
+
+            let user = await db.User.findOne({
+                where: { phone: user_phone }
+            });
+            if (user)
+            {
+                resolve(true)
+            } else
+            {
+                resolve(false)
+            }
+        } catch (error)
+        {
             reject(error);
         }
     });
@@ -40,17 +95,43 @@ const checkUser = (user_name, user_email) => {
 /**
  * @param {*} Create New User with database connection
  */
-const createUser = (data) => {
-    return new Promise(async(resolve, reject) => {
-        try {
+const Create = (data) =>
+{
+    return new Promise(async (resolve, reject) =>
+    {
+        try
+        {
             // check email and user name
-            let check = await checkUser(data.userName, data.email);
-            if (check === true) {
+            let check_email = await checkEmail(data.email);
+            let check_phone = await checkPhone(data.phone);
+            let checkUserName = await checkUser(data.userName)
+            if (check_email === true)
+            {
+                console.log(" check email")
                 resolve({
                     errorCode: 1,
-                    errorMessage: "Username and email already exist, Please enter another username and email address !!!!"
+                    errorMessage: "Email hoặc tên người dùng và điện thoại đã tồn tại, Vui lòng nhập một địa chỉ email mới !!!!",
+                    errorData: "Email"
                 });
-            } else {
+            } else if (check_phone === true)
+            {
+                console.log(" check phone")
+                resolve({
+                    errorCode: 1,
+                    errorMessage: "Email hoặc tên người dùng và điện thoại đã tồn tại, Vui lòng nhập một địa chỉ số điện thoại mới !!!!",
+                    errorData: "phone"
+                });
+            } else if (checkUserName === true)
+            {
+                console.log(" check user name")
+                resolve({
+                    errorCode: 1,
+                    errorMessage: "Email hoặc tên người dùng và điện thoại đã tồn tại, Vui lòng nhập một địa chỉ tên đăng nhập mới !!!!",
+                    errorData: "userName"
+                });
+            }
+            else
+            {
                 let hasPasswordByBcrypt = await hasUserPassword(data.password);
                 await db.User.create({
                     email: data.email,
@@ -59,132 +140,161 @@ const createUser = (data) => {
                     address: data.address,
                     phone: data.phone,
                     sex: data.sex,
-                    GroupId: data.GroupId,
+                    GroupId: 4,
+                    fullName: data.fullName
                 });
             };
             resolve({
                 errorCode: 0,
-                errorMessage: "Successfully !!!"
+                errorMessage: "Tạo Mới Người Dùng Thành Công !!!",
+                errorData: []
             })
-
-        } catch (error) {
-            reject(error);
+        } catch (error)
+        {
+            console.log(">>>>> Error ", error);
+            reject({
+                errorCode: -1,
+                errorMessage: "Data Does Not Exist !!!",
+                errorData: []
+            });
         }
     })
 };
 /**
- * @param {*} Show User in database 
+ * 
+ * @param {user pagination} for User 
+ * @returns 
  */
-const getAllUser = (user_id) => {
-    return new Promise(async(resolve, reject) => {
-        try {
-            //===================================//
-            /**
-             * param[*} test relationships
-             */
-
-            // let newUser = await db.User.findOne({
-            //     where: { id: 1 },
-            //     raw: true,
-            //     include: { model: db.Group, attributes: ["name", "description"] },
-            //     nest: true,
-            //     attributes: ["email", "userName", "address", "phone", "sex"]
-            // });
-            // let newRow = await db.Role.findAll({
-            //     include: {
-            //         model: db.Group,
-            //         where: { id: 2 },
-            //         attributes: ["name", "description"]
-            //     },
-            //     raw: true,
-            //     nest: true,
-            //     attributes: ["url", "description"]
-            // });
-            //===========================================//
-            let users = "";
-            if (user_id === "all") {
-                users = await db.User.findAll({
-                    attributes: {
-                        exclude: ["password", "createdAt", "updatedAt"]
-                    },
-                    raw: true
-                })
-            };
-            if (user_id && user_id !== "all") {
-                users = await db.User.findOne({
-                    where: { id: user_id },
-                    attributes: {
-                        exclude: ["password", "createdAt", "updatedAt"]
-                    },
-                    raw: true
-                })
+const getUserWithPagination = (page, limit) =>
+{
+    return new Promise(async (resolve, reject) =>
+    {
+        try
+        {
+            let offset = (page - 1) * limit
+            const { count, rows } = await db.User.findAndCountAll({
+                attributes: ["id", "email", "userName", "address", "phone", "sex", "fullName"],
+                include: { model: db.Group, attributes: ["name", "description"] },
+                order: [
+                    ["id", "DESC"]
+                ],
+                raw: true,
+                nest: true,
+                offset: offset,
+                limit: limit
+            })
+            let totalPages = Math.ceil(count / limit)
+            let data = {
+                totalRows: count,
+                totalPages: totalPages,
+                users: rows
             }
-            resolve(users);
-
-        } catch (error) {
-            reject(error);
+            resolve({
+                errorCode: 0,
+                errorMessage: "Successfully !!!",
+                errorData: data
+            })
+        } catch (error)
+        {
+            console.log(">>>>> Error ", error);
+            reject({
+                errorCode: -1,
+                errorMessage: "Data Does Not Exist !!!",
+                errorData: []
+            });
         }
     })
-};
+}
 /**
  * @param {*} DELETE USER 
  */
-const deleteUser = (userId) => {
-    return new Promise(async(resolve, reject) => {
-        try {
+const Delete = (userId) =>
+{
+    return new Promise(async (resolve, reject) =>
+    {
+        try
+        {
             let user = await db.User.findOne({
                 where: { id: userId }
             });
-            if (!user) {
+            if (!user)
+            {
                 resolve({
                     errorCode: 1,
-                    errorMessage: "Your results were not found !!!!"
+                    errorMessage: "Kết quả của bạn không được tìm thấy !!!!",
+                    errorData: []
                 });
-            } else {
+            } else
+            {
                 await user.destroy()
             }
             resolve({
                 errorCode: 0,
-                errorMessage: "Successfully !!!"
+                errorMessage: "Xoá Người Dùng Thành Công !!!",
+                errorData: []
             })
-
-        } catch (error) {
-            reject(error);
+        } catch (error)
+        {
+            console.log(">>>>> Error ", error);
+            reject({
+                errorCode: -1,
+                errorMessage: "Data Does Not Exist !!!",
+                errorData: []
+            });
         }
     })
 };
 /**
  * @param {*} Update user in database
  */
-const editUser = (data) => {
-    return new Promise(async(resolve, reject) => {
-        try {
+const Edit = (data) =>
+{
+    return new Promise(async (resolve, reject) =>
+    {
+        try
+        {
             let user = await db.User.findOne({
                 where: { id: data.id }
             })
-            if (!user) {
+            if (!user)
+            {
                 resolve({
                     errorCode: 1,
-                    errorMessage: " Your results were not found !!!!"
+                    errorMessage: " Your results were not found !!!!",
+                    errorData: []
                 });
-            } else {
-                user.email = data.email
+            } else
+            {
                 user.userName = data.userName
+                user.fullName = data.fullName
+                user.address = data.address
+                user.sex = data.sex
+                user.GroupId = data.GroupId
                 await user.save()
             }
             resolve({
                 errorCode: 0,
-                errorMessage: "Successfully !!!"
+                errorMessage: " Cập Nhật Thành Công !!!",
+                errorData: []
             })
-        } catch (error) {
-            reject(error);
+        } catch (error)
+        {
+            console.log(">>>>> Error ", error);
+            reject({
+                errorCode: -1,
+                errorMessage: "Data Does Not Exist !!!",
+                errorData: []
+            });
         }
     })
 }
 
+
+
 module.exports = {
-    createUser: createUser,
-    deleteUser: deleteUser,
-    getAllUser: getAllUser,
-    editUser: editUser
+    Create: Create,
+    Delete: Delete,
+    Edit: Edit,
+    getUserWithPagination: getUserWithPagination
+
 }
